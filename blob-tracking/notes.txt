@@ -1,0 +1,5 @@
+From research, meanshift (specifically CAMshift) looks like it will yield the best results for tracking a monkey in the videos.  Blob testing has the ability of finding every monkey in the image, but requires a lot of fine tuning to find all monkeys/not find false matches in rocks and such.  
+
+CAMshift requires you to input a box at the start, the coordinates around the object you want to track.  My current thought is that I can use blob tracking to find a bunch keypoints that may be monkeys, then try to extract correctly sized boxes around those keypoints based on their size.  THEN, I will attempt to track all of those found object throughout the video, and see how the tracking does.
+
+-Dan
