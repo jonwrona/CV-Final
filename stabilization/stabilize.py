@@ -39,11 +39,10 @@ while(cap.grab()):
     good_new = p1[st==1]
     good_old = p0[st==1]
 
-    h, m = cv2.findHomography(good_old, good_new)
+    h, m = cv2.findHomography(good_new, good_old)
 
     height, width = frame.shape[:2]
     img = cv2.warpPerspective(frame, h, (width, height))
-    frame = img
 
     cv2.imshow('frame',img)
     k = cv2.waitKey(30) & 0xff
@@ -52,7 +51,10 @@ while(cap.grab()):
 
     # Now update the previous frame and previous points
     old_gray = frame_gray.copy()
+    old_gray = cv2.warpPerspective(old_gray, h, (width, height))
     p0 = good_new.reshape(-1,1,2)
+    p0 = cv2.perspectiveTransform(p0, h)
+
 
 cv2.destroyAllWindows()
 cap.release()
