@@ -7,12 +7,13 @@ cap = cv2.VideoCapture('monkey2.mkv')
 ret,frame = cap.read()
 
 # setup initial location of window
-r,h,c,w = 250,90,400,125  # simply hardcoded the values
+# r,h,c,w = 250,90,400,125  # simply hardcoded the values
+c, r, w, h = 770, 670, 75, 75
 track_window = (c,r,w,h)
 
 # set up the ROI for tracking
 roi = frame[r:r+h, c:c+w]
-hsv_roi =  cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+hsv_roi =  cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 mask = cv2.inRange(hsv_roi, np.array((0., 60.,32.)), np.array((180.,255.,255.)))
 roi_hist = cv2.calcHist([hsv_roi],[0],mask,[180],[0,180])
 cv2.normalize(roi_hist,roi_hist,0,255,cv2.NORM_MINMAX)
@@ -28,12 +29,11 @@ while(1):
         dst = cv2.calcBackProject([hsv],[0],roi_hist,[0,180],1)
 
         # apply meanshift to get the new location
-        ret, track_window = cv2.CamShift(dst, track_window, term_crit)
+        ret, track_window = cv2.meanShift(dst, track_window, term_crit)
 
         # Draw it on image
-        pts = cv2.cv.BoxPoints(ret)
-        pts = np.int0(pts)
-        img2 =cv2.polylines(frame,[pts],True, 255,2)
+        x,y,w,h = track_window
+        img2 = cv2.rectangle(frame, (x,y), (x+w,y+h), 255,2)
         cv2.imshow('img2', frame)
 
         k = cv2.waitKey(60) & 0xff
