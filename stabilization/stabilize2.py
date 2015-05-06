@@ -3,7 +3,16 @@
 import numpy as np
 import cv2
 
-cap = cv2.VideoCapture('test/bed.mp4')
+def resize_img( im, max_dim ):
+    scale = float(max_dim) / max(im.shape)
+    if scale >= 1:
+        return np.copy(im)
+
+    new_size = (int(im.shape[1]*scale), int(im.shape[0]*scale))
+    im_new = cv2.resize(im, new_size)   # creates a new image object
+    return im_new
+
+cap = cv2.VideoCapture('test/rotate.mp4')
 
 # params for ShiTomasi corner detection
 feature_params = dict( maxCorners = 100,
@@ -35,7 +44,9 @@ while(cap.grab()):
     height, width = frame.shape[:2]
     out = cv2.warpAffine(frame, m, (width, height))
 
-    img = np.hstack((frame, out))
+    frame_small = resize_img(frame, 650)
+    out_small = resize_img(out, 650)
+    img = np.vstack((frame_small, out_small))
     cv2.imshow('frame', img)
     k = cv2.waitKey(30) & 0xff
     if k == 27:

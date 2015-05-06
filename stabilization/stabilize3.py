@@ -1,6 +1,15 @@
 import numpy as np
 import cv2
 
+def resize_img( im, max_dim ):
+    scale = float(max_dim) / max(im.shape)
+    if scale >= 1:
+        return np.copy(im)
+
+    new_size = (int(im.shape[1]*scale), int(im.shape[0]*scale))
+    im_new = cv2.resize(im, new_size)   # creates a new image object
+    return im_new
+
 # open the video
 cap = cv2.VideoCapture('test/bed.mp4')
 assert(cap.isOpened())
@@ -24,6 +33,8 @@ prev, prev_gray = None, None
 ret, prev = cap.read()
 prev_gray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
 
+matrices = []
+
 transforms = []
 last = None
 
@@ -45,6 +56,7 @@ while(cap.grab()):
 
     # estimate translation and rotation only
     m = cv2.estimateRigidTransform(np.array(prev_pt_filt), np.array(curr_pt_filt), False)
+    matrices.append(m)
 
     # check for transform not found?
     if m is None:
@@ -55,6 +67,9 @@ while(cap.grab()):
     dy = m[1][2]
     da = np.arctan2(m[1][0], m[0][0])
     transforms.append((dx, dy, da))
+
+    prev = curr.copy()
+    prev_gray = curr_gray.copy()
 
 
 
@@ -129,9 +144,9 @@ while(cap.grab()):
     transform[1][2] = transforms_new[index][1]
 
     h, w = frame.shape[:2]
-    frame_t = cv2.warpAffine(frame, transform, (w, h))
+    frame_t = cv2.warpAffine(frame, np.array(transform), (w, h))
 
-    cv2.imshow('frame', frame_t)
+    cv2.imshow('frame', resize_img(frame_t, 700))
     k = cv2.waitKey(30) & 0xff
     if k == 27:
         break
