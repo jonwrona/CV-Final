@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
-
+import time
+import matplotlib.pyplot as plt
 cap = cv2.VideoCapture('monkey2.mkv')
 
 # take first frame of the video
@@ -8,7 +9,7 @@ ret,frame = cap.read()
 
 # setup initial location of window
 # r,h,c,w = 250,90,400,125  # simply hardcoded the values
-c, r, w, h = 770, 670, 75, 75
+c, r, w, h = 790, 680, 75, 75
 track_window = (c,r,w,h)
 
 # set up the ROI for tracking
@@ -34,8 +35,13 @@ while(1):
         # Draw it on image
         x,y,w,h = track_window
         img2 = cv2.rectangle(frame, (x,y), (x+w,y+h), 255,2)
-        cv2.imshow('img2', frame)
-
+        imgshow = cv2.resize(frame, (0,0), fx=.5, fy=.5)
+        # cv2.imshow('img2', img)
+        # imgshow = cv2.cvtColor(imgshow, cv2.COLOR_BGR2RGB)
+        # plt.imshow(imgshow)
+        # plt.show()
+        cv2.imshow('frame', imgshow)
+        # time.sleep()
         k = cv2.waitKey(60) & 0xff
         if k == 27:
             break

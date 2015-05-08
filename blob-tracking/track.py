@@ -44,7 +44,7 @@ def main():
 
 	# # otherwise, load the video
 	# else:
-	camera = cv2.VideoCapture('monkey2.mkv')
+	camera = cv2.VideoCapture('GOPR0007.MP4')
 
 	# setup the mouse callback
 	cv2.namedWindow("frame")

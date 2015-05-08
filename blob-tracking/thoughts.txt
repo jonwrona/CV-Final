@@ -1,0 +1,2 @@
+Thoughts for meanshift:
+What does the ROI_HIST in range do? what do the numbers in the arrays represent? Will changing them help to better track the monkeys?
