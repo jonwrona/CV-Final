@@ -52,8 +52,8 @@ for i, pt in enumerate(p0):
 	a,b = pt[0]
 	cv2.circle(frame2,(a,b),5,color[i].tolist(),-1)
 frame2 = cv2.resize(frame2, (0,0), fx=.5, fy=.5)
-cv2.imshow('found keypoints', frame2)
-cv2.waitKey(0)
+# cv2.imshow('found keypoints', frame2)
+# cv2.waitKey(0)
 
 # Create rectangles based on these points
 rectangles = []
@@ -69,20 +69,20 @@ for rect in rectangles:
 	hsv_roi =  cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
 	# These values (0, 60, 32), (180, 255, 255) are used in all of the examples. Why? I feel like changing them is the key to correctly tracking monkeys, but idk
 	# This creates a mask of values either 255 or 0 (1 or 0), based on if they are in the range provided.
-	mask = cv2.inRange(hsv_roi, np.array((0., 60.,32.)), np.array((180.,255.,255.)))
-	plt.imshow(mask, cmap = cm.Greys_r)
-	plt.show()
+	mask = cv2.inRange(roi, np.array((0., 110., 70.)), np.array((180.,255., 255.)))
+	# plt.imshow(mask, cmap = cm.Greys_r)
+	# plt.show()
 	# We use 180 because HSV values only go up to 180
 	# We use the mask from above to do calcHist. Why are we making this histogram?
 	roi_hist = cv2.calcHist([hsv_roi],[0],mask,[180],[0,180])
 	# Normalize the histogram
 	cv2.normalize(roi_hist,roi_hist,0,255,cv2.NORM_MINMAX)
 	roi_list.append(roi_hist)
-	x,y,w,h = rect
-	cv2.rectangle(test_frame, (x,y), (x+w,y+h), 255,2)
-test_frame = cv2.resize(test_frame, (0,0), fx=.5, fy=.5)
-cv2.imshow('found boxes', test_frame)
-cv2.waitKey(0)
+# 	x,y,w,h = rect
+# 	cv2.rectangle(test_frame, (x,y), (x+w,y+h), 255,2)
+# test_frame = cv2.resize(test_frame, (0,0), fx=.5, fy=.5)
+# cv2.imshow('found boxes', test_frame)
+# cv2.waitKey(0)
 term_crit = ( cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1 )
 
 while(1):
@@ -101,7 +101,7 @@ while(1):
         imgshow = cv2.resize(frame, (0,0), fx=.5, fy=.5)
 
         cv2.imshow('frame', imgshow)
-        time.sleep(1)
+        # time.sleep(1)
         k = cv2.waitKey(60) & 0xff
         if k == 27:
             break
