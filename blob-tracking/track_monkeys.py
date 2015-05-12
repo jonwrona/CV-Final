@@ -70,6 +70,8 @@ for rect in rectangles:
 	# These values (0, 60, 32), (180, 255, 255) are used in all of the examples. Why? I feel like changing them is the key to correctly tracking monkeys, but idk
 	# This creates a mask of values either 255 or 0 (1 or 0), based on if they are in the range provided.
 	mask = cv2.inRange(hsv_roi, np.array((0., 60.,32.)), np.array((180.,255.,255.)))
+	plt.imshow(mask, cmap = cm.Greys_r)
+	plt.show()
 	# We use 180 because HSV values only go up to 180
 	# We use the mask from above to do calcHist. Why are we making this histogram?
 	roi_hist = cv2.calcHist([hsv_roi],[0],mask,[180],[0,180])
