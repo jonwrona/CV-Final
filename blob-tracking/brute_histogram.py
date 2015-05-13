@@ -59,7 +59,7 @@ points = cv2.goodFeaturesToTrack(old_gray, mask = None, **feature_params)
 # take first frame of the video
 ret,frame = cap.read()
 
-check_radius = 12
+check_radius = 5
 default_width = 60
 
 def get_rekt(pix):
