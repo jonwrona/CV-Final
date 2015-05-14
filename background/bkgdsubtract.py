@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import os
 from matplotlib import pyplot as plt
-import image_plot_utilities as ipl
+# import image_plot_utilities as ipl
 
 
 def create_frames( vidname ):

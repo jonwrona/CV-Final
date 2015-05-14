@@ -74,8 +74,7 @@ def getTransformParams( videoCapture, start=0, end=None ):
 
     return transforms
 
-def trajectorySmoothing( transforms, smoothingRadius=30, still=False ):
-    # calculate the image trajectory
+def calculateTrajectory( transforms ):
     x, y, a = 0.0, 0.0, 0.0
     trajectory = []
     for transform in transforms:
@@ -83,47 +82,43 @@ def trajectorySmoothing( transforms, smoothingRadius=30, still=False ):
         y += transform[1]
         a += transform[2]
         trajectory.append((x, y, a))
+    return trajectory
 
-    # smooth the trajectory
+def trajectorySmoothing( trajectory, smoothingRadius=30 ):
     smoothed = []
-    if not still:
-        for i in range(len(trajectory)):
-            xSum, ySum, aSum = 0.0, 0.0, 0.0
-            count = 0
+    for i in range(len(trajectory)):
+        xSum, ySum, aSum = 0.0, 0.0, 0.0
+        count = 0
 
-            for j in range(-1 * smoothingRadius, smoothingRadius):
-                ind = i + j
-                if ind >= 0 and ind < len(trajectory):
-                    xSum += trajectory[ind][0]
-                    ySum += trajectory[ind][1]
-                    aSum += trajectory[ind][2]
-                    count += 1
-            
-            xAvg = xSum / count
-            yAvg = ySum / count
-            aAvg = aSum / count
-            # if still: xAvg, yAvg, aAvg = 0.0, 0.0, 0.0
-            smoothed.append((xAvg, yAvg, aAvg))
-    else: smoothed = [(0.0, 0.0, 0.0)] * len(trajectory)
+        for j in range(-1 * smoothingRadius, smoothingRadius):
+            ind = i + j
+            if ind >= 0 and ind < len(trajectory):
+                xSum += trajectory[ind][0]
+                ySum += trajectory[ind][1]
+                aSum += trajectory[ind][2]
+                count += 1
+        
+        xAvg = xSum / count
+        yAvg = ySum / count
+        aAvg = aSum / count
+        # if still: xAvg, yAvg, aAvg = 0.0, 0.0, 0.0
+        smoothed.append((xAvg, yAvg, aAvg))
 
-    # generate new transforms based on the smoothed trajectory
-    x, y, a = 0.0, 0.0, 0.0
+    return smoothed
+
+def generateTransforms( transforms, trajectory, smoothed=None ):
     new = []
     for i, transform in enumerate(transforms):
-        x += transform[0]
-        y += transform[1]
-        a += transform[2]
+        currentSmooth = (0.0, 0.0, 0.0)
+        if not smoothed is None:
+            currentSmooth = smoothed[i]
 
-        xDiff = smoothed[i][0] - x
-        yDiff = smoothed[i][1] - y
-        aDiff = smoothed[i][2] - a
-
-        dx = transform[0] + xDiff
-        dy = transform[1] + yDiff
-        da = transform[2] + aDiff
+        dx = transform[0] + currentSmooth[0] - trajectory[i][0]
+        dy = transform[1] + currentSmooth[1] - trajectory[i][1]
+        da = transform[2] + currentSmooth[2] - trajectory[i][2]
         new.append((dx, dy, da))
 
-    # return the smoothed transforms
+    # return the new transforms
     return new
 
 def transformParamsToAffine( params ):
@@ -164,6 +159,16 @@ def transformVideo( videoCapture, transforms, start=0, end=None, resize=None, tr
 
     return frames
 
+def stabilize( videoCapture, start=0, end=None, smoothingRadius=30, resize=None, trim=None ):
+    transforms = getTransformParams(videoCapture, start, end)
+    trajectory = calculateTrajectory(transforms)
+    smoothed = None
+    if not smoothingRadius is None:
+        smoothed = trajectorySmoothing(trajectory, smoothingRadius)
+    finalTransforms = generateTransforms(transforms, trajectory, smoothed)
+    frames = transformVideo(videoCapture, finalTransforms, start, end, resize, trim)
+    return frames
+
 def writeFramesToVideo( frames, outName ):
     outFile = outName + '.avi'
     # get size of first frame
@@ -181,21 +186,20 @@ def main( args ):
     outName = None
     start = 0
     end = None
+    smooth = False
     smoothingRadius = 30
-    still = False
     resize = None
     trim = None
 
     # parse command line arguments
     try:
-        opts, args = getopt.getopt(args, "hi:o:", ["in=", "out=", "start=", "end=", "radius=", "still", "resize=", "trim="])
+        opts, args = getopt.getopt(args, "hi:o:", ["in=", "out=", "start=", "end=", "smooth", "radius=", "resize=", "trim="])
     except getopt.GetoptError:
-        print 'stabilizer.py -i <input_file> -o <out_name> --start <frame_#> --end <frame_#> --radius <smoothing_radius> --still --resize <max_dimension> --trim <amount>\n  \'-i\' is the only required tag'
+        print 'stabilizer.py -i <input_file> -o <out_name> --start <frame_#> --end <frame_#> --smooth --radius <smoothing_radius> --resize <max_dimension> --trim <amount>\n  \'-i\' is the only required tag'
         sys.exit(2)
-
     for opt, arg in opts:
         if opt == '-h':
-            print 'stabilizer.py -i <input_file> -o <out_name> --start <frame_#> --end <frame_#> --radius <smoothing_radius> --still --resize <max_dimension> --trim <amount>\n  \'-i\' is the only required tag'
+            print 'stabilizer.py -i <input_file> -o <out_name> --start <frame_#> --end <frame_#> --smooth --radius <smoothing_radius> --resize <max_dimension> --trim <amount>\n  \'-i\' is the only required tag'
             sys.exit()
         elif opt in ('-i', '--in'):
             inFile = arg
@@ -205,25 +209,24 @@ def main( args ):
             start = int(arg)
         elif opt == '--end':
             end = int(arg)
+        elif opt == '--smooth':
+            smooth = True
         elif opt == '--radius':
             smoothingRadius = int(arg)
-        elif opt == '--still':
-            still = True
         elif opt == '--resize':
             resize = int(arg)
         elif opt == '--trim':
             trim = int(arg)
 
     if inFile is None:
-        print 'stabilizer.py -i <input_file> -o <out_name> --start <frame_#> --end <frame_#> --radius <smoothing_radius> --still --resize <max_dimension> --trim <amount>\n  \'-i\' is the only required tag'
+        print 'stabilizer.py -i <input_file> -o <out_name> --start <frame_#> --end <frame_#> --radius <smoothing_radius> --resize <max_dimension> --trim <amount>\n  \'-i\' is the only required tag'
         sys.exit()
     if outName is None:
         outName = 'test'
 
     cap = cv2.VideoCapture(inFile)
-    transforms = getTransformParams(cap, start, end)
-    smoothed = trajectorySmoothing(transforms, smoothingRadius, still)
-    frames = transformVideo(cap, smoothed, start, end, resize, trim)
+    if not smooth: smoothingRadius = None
+    frames = stabilize(cap, start, end, smoothingRadius)
     writeFramesToVideo(frames, outName)
     cap.release()
 
