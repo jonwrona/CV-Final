@@ -1,5 +1,6 @@
 import numpy as np
 import cv2, sys, getopt
+from videoHelper import writeFramesToVideo, resizeImage
 
 # params for ShiTomasi corner detection
 FEATURE_PARAMS = dict( maxCorners = 100,
@@ -11,15 +12,6 @@ FEATURE_PARAMS = dict( maxCorners = 100,
 LK_PARAMS = dict( winSize  = (15,15),
                   maxLevel = 2,
                   criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-
-def resizeImage( im, max_dim ):
-    scale = float(max_dim) / max(im.shape)
-    if scale >= 1:
-        return np.copy(im)
-
-    new_size = (int(im.shape[1]*scale), int(im.shape[0]*scale))
-    im_new = cv2.resize(im, new_size)   # creates a new image object
-    return im_new
 
 def getTransformParams( videoCapture, start=0, end=None ):
     assert(videoCapture.isOpened())
@@ -116,6 +108,7 @@ def generateTransforms( transforms, trajectory, smoothed=None ):
         dx = transform[0] + currentSmooth[0] - trajectory[i][0]
         dy = transform[1] + currentSmooth[1] - trajectory[i][1]
         da = transform[2] + currentSmooth[2] - trajectory[i][2]
+        
         new.append((dx, dy, da))
 
     # return the new transforms
@@ -168,18 +161,6 @@ def stabilize( videoCapture, start=0, end=None, smoothingRadius=30, resize=None,
     finalTransforms = generateTransforms(transforms, trajectory, smoothed)
     frames = transformVideo(videoCapture, finalTransforms, start, end, resize, trim)
     return frames
-
-def writeFramesToVideo( frames, outName ):
-    outFile = outName + '.avi'
-    # get size of first frame
-    shape = frames[0].shape
-    h, w = shape[:2]
-    o = cv2.VideoWriter(outFile, cv2.cv.CV_FOURCC('M','J','P','G'), 30, (w, h))
-    for frame in frames:
-        # make sure every frame is the same size
-        assert(frame.shape == shape)
-        o.write(frame)
-    o.release()
 
 def main( args ):
     inFile = None
